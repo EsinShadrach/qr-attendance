@@ -15,12 +15,7 @@ import {
   SidebarMenuItem,
   SidebarSeparator,
 } from "@/components/ui/sidebar";
-import {
-  LayoutDashboard,
-  BookOpen,
-  GraduationCap,
-  LogOut,
-} from "lucide-react";
+import { LayoutDashboard, BookOpen, GraduationCap, LogOut } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { toast } from "sonner";
 

@@ -2,12 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Users } from "lucide-react";
 
@@ -71,9 +66,7 @@ export function AttendanceTable({ sessionId }: AttendanceTableProps) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-sm">
-          Attendance ({records.length})
-        </CardTitle>
+        <CardTitle className="text-sm">Attendance ({records.length})</CardTitle>
       </CardHeader>
       <CardContent className="p-0">
         <div className="divide-y">

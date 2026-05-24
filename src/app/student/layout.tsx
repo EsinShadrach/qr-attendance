@@ -29,7 +29,10 @@ export default async function StudentLayout({
     <div className="flex min-h-screen flex-col">
       <header className="sticky top-0 z-50 border-b bg-background">
         <div className="flex h-14 items-center gap-4 px-4">
-          <Link href="/student/dashboard" className="flex items-center gap-2 font-semibold">
+          <Link
+            href="/student/dashboard"
+            className="flex items-center gap-2 font-semibold"
+          >
             <GraduationCap className="size-5 text-primary" />
             AttendanceIQ
           </Link>

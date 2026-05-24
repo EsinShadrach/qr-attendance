@@ -64,8 +64,8 @@ The `provider_id` in `auth.identities` must be the user's UUID (same as `id`), N
 - `is_lecturer()` reads from `auth.jwt() -> 'app_metadata' ->> 'app_role'` first (fast, no table query), then falls back to `public.get_user_role()` (SECURITY DEFINER, bypasses RLS) when the JWT claim is missing — ensures backward compatibility with JWTs issued before `app_role` was added to `app_metadata`.
 - `get_user_role()` is `SECURITY DEFINER` — fetches `role` from `public.users` without triggering RLS.
 - `lecturer_owns_course(course_id)` is `SECURITY DEFINER` — bypasses RLS on `courses`, breaking the `courses↔enrollments` cycle that PostgreSQL detects at the policy-definition level.
-- All lecturer per-command policies use `public.is_lecturer()` guard.  
-- All student per-command policies use `NOT public.is_lecturer()` guard.  
+- All lecturer per-command policies use `public.is_lecturer()` guard.
+- All student per-command policies use `NOT public.is_lecturer()` guard.
 - Use **separate `FOR SELECT` / `FOR INSERT WITH CHECK` / `FOR UPDATE` / `FOR DELETE`** policies — `FOR ALL USING` does NOT apply to INSERT (needs `WITH CHECK`).
 - Always use fully-qualified column names in subqueries (`courses.id`, `sessions.course_id`).
 

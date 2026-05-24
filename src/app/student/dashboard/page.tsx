@@ -1,17 +1,11 @@
 "use client";
 
-import { useEffect, useState, useRef, useCallback } from "react";
+import { useEffect, useState, useRef, startTransition } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+
 import { toast } from "sonner";
-import {
-  Camera,
-  CheckCircle2,
-  XCircle,
-  Clock,
-  BookOpen,
-} from "lucide-react";
+import { Camera, CheckCircle2, XCircle, Clock, BookOpen } from "lucide-react";
 import { Html5Qrcode } from "html5-qrcode";
 
 type ScanState = "idle" | "scanning" | "success" | "error";
@@ -38,70 +32,81 @@ export default function StudentDashboard() {
   const scannerRef = useRef<Html5Qrcode | null>(null);
   const supabase = createClient();
 
-  const handleScan = useCallback(
-    async (decodedText: string) => {
-      const scanner = scannerRef.current;
-      if (!scanner) return;
-
-      try {
-        await scanner.pause();
-        setScanState("scanning");
-        setScanMessage("Verifying...");
-
-        const res = await fetch("/api/scan", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ qr_token: decodedText }),
-        });
-
-        const data = await res.json();
-
-        if (res.ok && data.success) {
-          setScanState("success");
-          setScanMessage("Attendance marked!");
-          toast.success("Attendance recorded successfully");
-          fetchHistory();
-        } else {
-          setScanState("error");
-          setScanMessage(data.error ?? "Failed to record attendance");
-          toast.error(data.error ?? "Failed to record attendance");
-        }
-      } catch {
-        setScanState("error");
-        setScanMessage("Network error. Please try again.");
-        toast.error("Network error");
-      }
-
-      setTimeout(async () => {
-        setScanState("idle");
-        setScanMessage("");
-        try {
-          await scanner.resume();
-        } catch {
-          // scanner might have been stopped
-        }
-      }, 3000);
-    },
-    [supabase]
-  );
-
-  const fetchHistory = useCallback(async () => {
+  async function fetchHistory() {
     const { data } = await supabase
       .from("attendance")
-      .select(
-        "id, scanned_at, sessions!inner(date, courses!inner(code, name))"
-      )
+      .select("id, scanned_at, sessions!inner(date, courses!inner(code, name))")
       .order("scanned_at", { ascending: false })
       .limit(20);
 
     if (data) {
       setRecords(data as unknown as AttendanceRecord[]);
     }
-  }, [supabase]);
+  }
 
   useEffect(() => {
-    fetchHistory();
-  }, [fetchHistory]);
+    startTransition(() => {
+      supabase
+        .from("attendance")
+        .select(
+          "id, scanned_at, sessions!inner(date, courses!inner(code, name))",
+        )
+        .order("scanned_at", { ascending: false })
+        .limit(20)
+        .then(({ data }) => {
+          if (data) setRecords(data as unknown as AttendanceRecord[]);
+        });
+    });
+  }, []);
+
+  const handleScan = async (decodedText: string) => {
+    const scanner = scannerRef.current;
+    if (!scanner) return;
+
+    try {
+      scanner.pause();
+      setScanState("scanning");
+      setScanMessage("Verifying...");
+
+      const res = await fetch("/api/scan", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ qr_token: decodedText }),
+      });
+
+      const data = await res.json();
+
+      if (res.ok && data.success) {
+        setScanState("success");
+        setScanMessage("Attendance marked!");
+        toast.success("Attendance recorded successfully");
+        fetchHistory();
+      } else {
+        setScanState("error");
+        setScanMessage(data.error ?? "Failed to record attendance");
+        toast.error(data.error ?? "Failed to record attendance");
+      }
+    } catch {
+      setScanState("error");
+      setScanMessage("Network error. Please try again.");
+      toast.error("Network error");
+    }
+
+    setTimeout(async () => {
+      setScanState("idle");
+      setScanMessage("");
+      try {
+        await scanner.resume();
+      } catch {
+        // scanner might have been stopped
+      }
+    }, 3000);
+  };
+
+  const handleScanRef = useRef<(text: string) => void>(() => {});
+  useEffect(() => {
+    handleScanRef.current = handleScan;
+  });
 
   useEffect(() => {
     let scanner: Html5Qrcode;
@@ -117,8 +122,8 @@ export default function StudentDashboard() {
             fps: 10,
             qrbox: { width: 250, height: 250 },
           },
-          handleScan,
-          () => {}
+          (text) => void handleScanRef.current(text),
+          () => {},
         );
 
         setCameraStarted(true);
@@ -133,13 +138,15 @@ export default function StudentDashboard() {
     return () => {
       if (scanner) {
         scanner.stop().catch(() => {});
-        try { scanner.clear(); } catch {}
+        try {
+          scanner.clear();
+        } catch {}
       }
     };
-  }, [handleScan]);
+  }, []);
 
   return (
-    <div className="mx-auto max-w-lg space-y-6">
+    <div className="max-w-lg mx-auto space-y-6">
       <div>
         <h1 className="text-2xl font-bold">Scan Attendance</h1>
         <p className="text-sm text-muted-foreground">
@@ -149,8 +156,8 @@ export default function StudentDashboard() {
 
       <Card>
         <CardContent className="p-4">
-          <div className="relative aspect-square w-full overflow-hidden rounded-lg bg-muted">
-            <div id={SCANNER_ID} className="h-full w-full" />
+          <div className="relative w-full overflow-hidden rounded-lg aspect-square bg-muted">
+            <div id={SCANNER_ID} className="w-full h-full" />
 
             {!cameraStarted && (
               <div className="absolute inset-0 flex flex-col items-center justify-center gap-2">
@@ -167,7 +174,7 @@ export default function StudentDashboard() {
                   <Clock className="size-12 animate-pulse text-primary" />
                 )}
                 {scanState === "success" && (
-                  <CheckCircle2 className="size-12 text-green-500" />
+                  <CheckCircle2 className="text-green-500 size-12" />
                 )}
                 {scanState === "error" && (
                   <XCircle className="size-12 text-destructive" />
@@ -185,7 +192,7 @@ export default function StudentDashboard() {
         </CardHeader>
         <CardContent className="p-0">
           {!records.length ? (
-            <div className="flex flex-col items-center gap-2 py-8">
+            <div className="flex flex-col items-center py-8 gap-2">
               <BookOpen className="size-8 text-muted-foreground" />
               <p className="text-sm text-muted-foreground">
                 No attendance records yet
@@ -199,7 +206,7 @@ export default function StudentDashboard() {
                   className="flex items-center justify-between px-4 py-3"
                 >
                   <div className="flex items-center gap-3">
-                    <CheckCircle2 className="size-4 text-green-500" />
+                    <CheckCircle2 className="text-green-500 size-4" />
                     <div>
                       <p className="text-sm font-medium">
                         {record.sessions.courses.code}
@@ -209,10 +216,8 @@ export default function StudentDashboard() {
                       </p>
                     </div>
                   </div>
-                  <div className="text-right text-xs text-muted-foreground">
-                    <p>
-                      {new Date(record.sessions.date).toLocaleDateString()}
-                    </p>
+                  <div className="text-xs text-right text-muted-foreground">
+                    <p>{new Date(record.sessions.date).toLocaleDateString()}</p>
                     <p>
                       {new Date(record.scanned_at).toLocaleTimeString([], {
                         hour: "2-digit",

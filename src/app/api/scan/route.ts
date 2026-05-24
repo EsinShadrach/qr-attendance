@@ -38,7 +38,7 @@ export async function POST(request: Request) {
   if (existing) {
     return NextResponse.json(
       { error: "Already marked present" },
-      { status: 409 }
+      { status: 409 },
     );
   }
 
@@ -48,7 +48,10 @@ export async function POST(request: Request) {
   });
 
   if (insertError) {
-    return NextResponse.json({ error: "Failed to record attendance" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Failed to record attendance" },
+      { status: 500 },
+    );
   }
 
   return NextResponse.json({

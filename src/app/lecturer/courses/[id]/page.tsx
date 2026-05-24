@@ -88,11 +88,16 @@ export default async function CourseDetailPage({
 
   return (
     <div className="space-y-6">
-      <div className="flex items-start justify-between">
-        <div>
+      <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-start">
+        <div className="min-w-0">
           <div className="flex items-center gap-2">
-            <h1 className="text-2xl font-bold">{course.code}</h1>
-            <Badge variant="outline">{course.name}</Badge>
+            <h1 className="text-2xl font-bold shrink-0">{course.code}</h1>
+            <Badge
+              variant="outline"
+              className="truncate max-w-45 sm:max-w-none"
+            >
+              {course.name}
+            </Badge>
           </div>
           <p className="mt-1 text-sm text-muted-foreground">
             Course detail and attendance management
@@ -103,8 +108,8 @@ export default async function CourseDetailPage({
 
       <div className="grid gap-4 sm:grid-cols-4">
         <Card>
-          <CardContent className="flex items-center gap-4 p-4">
-            <div className="flex size-10 items-center justify-center rounded-lg bg-primary/10 text-primary">
+          <CardContent className="flex items-center p-4 gap-4">
+            <div className="flex items-center justify-center rounded-lg size-10 bg-primary/10 text-primary">
               <Users className="size-5" />
             </div>
             <div>
@@ -114,8 +119,8 @@ export default async function CourseDetailPage({
           </CardContent>
         </Card>
         <Card>
-          <CardContent className="flex items-center gap-4 p-4">
-            <div className="flex size-10 items-center justify-center rounded-lg bg-primary/10 text-primary">
+          <CardContent className="flex items-center p-4 gap-4">
+            <div className="flex items-center justify-center rounded-lg size-10 bg-primary/10 text-primary">
               <CalendarCheck className="size-5" />
             </div>
             <div>
@@ -125,8 +130,8 @@ export default async function CourseDetailPage({
           </CardContent>
         </Card>
         <Card>
-          <CardContent className="flex items-center gap-4 p-4">
-            <div className="flex size-10 items-center justify-center rounded-lg bg-primary/10 text-primary">
+          <CardContent className="flex items-center p-4 gap-4">
+            <div className="flex items-center justify-center rounded-lg size-10 bg-primary/10 text-primary">
               <Users className="size-5" />
             </div>
             <div>
@@ -136,8 +141,8 @@ export default async function CourseDetailPage({
           </CardContent>
         </Card>
         <Card>
-          <CardContent className="flex items-center gap-4 p-4">
-            <div className="flex size-10 items-center justify-center rounded-lg bg-primary/10 text-primary">
+          <CardContent className="flex items-center p-4 gap-4">
+            <div className="flex items-center justify-center rounded-lg size-10 bg-primary/10 text-primary">
               <Clock className="size-5" />
             </div>
             <div>
@@ -174,7 +179,7 @@ export default async function CourseDetailPage({
         <TabsContent value="sessions" className="space-y-3">
           {!sessions?.length ? (
             <Card>
-              <CardContent className="flex flex-col items-center gap-2 py-12">
+              <CardContent className="flex flex-col items-center py-12 gap-2">
                 <CalendarCheck className="size-10 text-muted-foreground" />
                 <p className="text-sm text-muted-foreground">
                   No sessions yet. Generate a QR code to start.
