@@ -155,7 +155,7 @@ export default function LoginPage() {
                 <Input
                   id="matricNo"
                   type="text"
-                  placeholder="e.g. 2101234567"
+                  placeholder="e.g. NOU123456789"
                   value={matricNo}
                   onChange={(e) => setMatricNo(e.target.value)}
                   required
@@ -177,8 +177,8 @@ export default function LoginPage() {
                   autoComplete="current-password"
                   className="pr-9"
                 />
-                <Button
-                  // type="submit"
+                <button
+                  type="button"
                   onClick={() => setShowPassword(!showPassword)}
                   className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
                   // tabIndex={-1}
@@ -188,7 +188,7 @@ export default function LoginPage() {
                   ) : (
                     <Eye className="size-4" />
                   )}
-                </Button>
+                </button>
               </div>
             </div>
 

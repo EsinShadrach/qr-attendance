@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState, useRef, startTransition } from "react";
-import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -13,7 +12,6 @@ import {
   XCircle,
   Clock,
   BookOpen,
-  LogOut,
   QrCode,
 } from "lucide-react";
 import { Html5Qrcode } from "html5-qrcode";
@@ -36,7 +34,6 @@ const SCANNER_ID = "qr-scanner";
 
 export default function StudentDashboard() {
   const supabase = createClient();
-  const router = useRouter();
   const [scanState, setScanState] = useState<ScanState>("idle");
   const [scanMessage, setScanMessage] = useState("");
   const [records, setRecords] = useState<AttendanceRecord[]>([]);
@@ -114,11 +111,6 @@ export default function StudentDashboard() {
     }
   }
 
-  async function handleLogout() {
-    await supabase.auth.signOut();
-    router.push("/login");
-  }
-
   async function stopScanner() {
     const scanner = scannerRef.current;
     if (scanner) {
@@ -159,9 +151,6 @@ export default function StudentDashboard() {
             Point your camera at the QR code to mark attendance
           </p>
         </div>
-        <Button variant="ghost" size="icon" onClick={handleLogout}>
-          <LogOut className="size-5" />
-        </Button>
       </div>
 
       <Card>

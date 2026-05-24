@@ -92,9 +92,45 @@ export function QrCodeDialog({ courseId }: QrCodeDialogProps) {
     document.body.removeChild(a);
   }
 
+  async function loadActiveSession() {
+    const { data: session } = await supabase
+      .from("sessions")
+      .select("qr_token, expires_at")
+      .eq("course_id", courseId)
+      .gt("expires_at", new Date().toISOString())
+      .order("expires_at", { ascending: false })
+      .limit(1)
+      .single();
+
+    if (session) {
+      const QRCode = (await import("qrcode")).default;
+      const url = await QRCode.toDataURL(session.qr_token, {
+        width: 400,
+        margin: 2,
+        color: { dark: "#000000", light: "#ffffff" },
+      });
+      setQrToken(session.qr_token);
+      setQrDataUrl(url);
+      setExpiresAt(new Date(session.expires_at));
+      setTimeLeft(
+        Math.max(
+          0,
+          Math.floor(
+            (new Date(session.expires_at).getTime() - Date.now()) / 1000,
+          ),
+        ),
+      );
+    }
+  }
+
   function handleOpenChange(open: boolean) {
     setOpen(open);
-    if (!open) {
+    if (open) {
+      setQrToken(null);
+      setQrDataUrl(null);
+      setExpiresAt(null);
+      loadActiveSession();
+    } else {
       setQrToken(null);
       setQrDataUrl(null);
       setExpiresAt(null);

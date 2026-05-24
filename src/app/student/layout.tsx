@@ -1,7 +1,10 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { GraduationCap } from "lucide-react";
-import Link from "next/link";
+import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
+import { SidebarTrigger } from "@/components/ui/sidebar";
+import { Separator } from "@/components/ui/separator";
+import { StudentSidebar } from "@/components/student/app-sidebar";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 
 export default async function StudentLayout({
   children,
@@ -26,22 +29,29 @@ export default async function StudentLayout({
   }
 
   return (
-    <div className="flex min-h-screen flex-col">
-      <header className="sticky top-0 z-50 border-b bg-background">
-        <div className="flex h-14 items-center gap-4 px-4">
-          <Link
-            href="/student/dashboard"
-            className="flex items-center gap-2 font-semibold"
-          >
-            <GraduationCap className="size-5 text-primary" />
-            AttendanceIQ
-          </Link>
-          <div className="ml-auto text-sm text-muted-foreground">
-            {profile.name}
+    <SidebarProvider defaultOpen={true}>
+      <StudentSidebar />
+      <SidebarInset>
+        <header className="flex h-12 shrink-0 items-center gap-2 border-b px-4">
+          <SidebarTrigger className="-ml-1" />
+          <Separator orientation="vertical" className="mr-2 h-4" />
+          <div className="ml-auto flex items-center gap-3">
+            <div className="text-right text-xs leading-tight">
+              <p className="font-medium">{profile.name}</p>
+            </div>
+            <Avatar className="size-8">
+              <AvatarFallback className="text-xs bg-primary/10 text-primary">
+                {(profile.name ?? "")
+                  .split(" ")
+                  .map((n: string) => n[0])
+                  .join("")
+                  .slice(0, 2)}
+              </AvatarFallback>
+            </Avatar>
           </div>
-        </div>
-      </header>
-      <main className="flex-1 p-4">{children}</main>
-    </div>
+        </header>
+        <div className="flex flex-1 flex-col p-4">{children}</div>
+      </SidebarInset>
+    </SidebarProvider>
   );
 }
