@@ -27,7 +27,7 @@ Package manager is **bun** (lockfile: `package-lock.json`). (prettier CLI is ins
 - `supabase/migrations/001_schema.sql` — already applied (RLS with JWT-based role + SECURITY DEFINER helper to break cycles)
 - `supabase/migrations/002_rpc_get_email.sql` — `get_email_by_matric_no` RPC
 - `supabase/migrations/003_seed_data.sql` — test accounts + course + sessions + attendance
-- **QR**: `qrcode` (generation) + `html5-qrcode` (scanning) — not installed yet
+- **QR**: `qrcode` (generation, client-side with `toDataURL`) + `html5-qrcode` (scanning) — both installed
 
 ## Layout & conventions
 
@@ -89,4 +89,11 @@ The `provider_id` in `auth.identities` must be the user's UUID (same as `id`), N
 /lecturer/courses/[id]/students              → list of enrolled students with attendance stats
 /lecturer/courses/[id]/students/[studentId]  → individual student attendance history
 /student/dashboard                           → QR scanner + recent attendance history
+/api/scan                                    → scan attendance (POST)
 ```
+
+## Mobile dev caveat
+
+**ngrok + dev server = clicks don't work on iOS.** The Next.js dev server's HMR WebSocket hangs over ngrok, which prevents React from completing hydration on mobile Safari. Symptoms: page renders as static HTML, JS module loads (alerts work), but event handlers never fire (no React hydration).
+
+**Fix:** Use `bun run build && bun run start` (production mode) — no HMR WebSocket, so hydration completes normally. Or access the dev server directly on the local network (no ngrok).

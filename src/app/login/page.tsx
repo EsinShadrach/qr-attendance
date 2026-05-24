@@ -1,11 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
-import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import {
   Card,
   CardContent,
@@ -13,15 +8,15 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { createClient } from "@/lib/supabase/client";
+import { Eye, EyeOff, GraduationCap, LogIn, UserRound } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
 import { toast } from "sonner";
-import { LogIn, GraduationCap, UserRound, Eye, EyeOff } from "lucide-react";
 
 type Role = "lecturer" | "student";
-
-console.log("[login] module loaded");
-if (typeof window !== "undefined") {
-  window.onerror = (msg) => alert("Global error: " + msg);
-}
 
 export default function LoginPage() {
   const [role, setRole] = useState<Role>("lecturer");
@@ -32,11 +27,6 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const router = useRouter();
   const supabase = createClient();
-
-  useEffect(() => {
-    console.log("[login] useEffect ran - React mounted successfully");
-    toast("React mounted on client");
-  }, []);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -133,10 +123,7 @@ export default function LoginPage() {
               tabIndex={0}
               onPointerDown={() => setRole("student")}
               onKeyDown={(e) => e.key === "Enter" && setRole("student")}
-              onClick={() => {
-                toast("apple");
-                return setRole("student");
-              }}
+              onClick={() => setRole("student")}
               className={`flex flex-1 cursor-pointer items-center justify-center gap-2 rounded-md px-3 py-2 text-sm font-medium select-none transition-colors ${
                 role === "student"
                   ? "bg-background text-foreground shadow-sm"
