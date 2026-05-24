@@ -1,11 +1,21 @@
 "use client";
 
 import { useEffect, useState, useRef, startTransition } from "react";
+import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-
+import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { Camera, CheckCircle2, XCircle, Clock, BookOpen } from "lucide-react";
+import {
+  Camera,
+  CameraOff,
+  CheckCircle2,
+  XCircle,
+  Clock,
+  BookOpen,
+  LogOut,
+  QrCode,
+} from "lucide-react";
 import { Html5Qrcode } from "html5-qrcode";
 
 type ScanState = "idle" | "scanning" | "success" | "error";
@@ -25,24 +35,13 @@ interface AttendanceRecord {
 const SCANNER_ID = "qr-scanner";
 
 export default function StudentDashboard() {
+  const supabase = createClient();
+  const router = useRouter();
   const [scanState, setScanState] = useState<ScanState>("idle");
   const [scanMessage, setScanMessage] = useState("");
   const [records, setRecords] = useState<AttendanceRecord[]>([]);
-  const [cameraStarted, setCameraStarted] = useState(false);
+  const [scannerOpen, setScannerOpen] = useState(false);
   const scannerRef = useRef<Html5Qrcode | null>(null);
-  const supabase = createClient();
-
-  async function fetchHistory() {
-    const { data } = await supabase
-      .from("attendance")
-      .select("id, scanned_at, sessions!inner(date, courses!inner(code, name))")
-      .order("scanned_at", { ascending: false })
-      .limit(20);
-
-    if (data) {
-      setRecords(data as unknown as AttendanceRecord[]);
-    }
-  }
 
   useEffect(() => {
     startTransition(() => {
@@ -103,55 +102,66 @@ export default function StudentDashboard() {
     }, 3000);
   };
 
-  const handleScanRef = useRef<(text: string) => void>(() => {});
-  useEffect(() => {
-    handleScanRef.current = handleScan;
-  });
+  async function fetchHistory() {
+    const { data } = await supabase
+      .from("attendance")
+      .select("id, scanned_at, sessions!inner(date, courses!inner(code, name))")
+      .order("scanned_at", { ascending: false })
+      .limit(20);
 
-  useEffect(() => {
-    let scanner: Html5Qrcode;
-
-    async function startCamera() {
-      try {
-        scanner = new Html5Qrcode(SCANNER_ID);
-        scannerRef.current = scanner;
-
-        await scanner.start(
-          { facingMode: "environment" },
-          {
-            fps: 10,
-            qrbox: { width: 250, height: 250 },
-          },
-          (text) => void handleScanRef.current(text),
-          () => {},
-        );
-
-        setCameraStarted(true);
-      } catch (err) {
-        console.error("Camera error:", err);
-        toast.error("Could not access camera");
-      }
+    if (data) {
+      setRecords(data as unknown as AttendanceRecord[]);
     }
+  }
 
-    startCamera();
+  async function handleLogout() {
+    await supabase.auth.signOut();
+    router.push("/login");
+  }
 
-    return () => {
-      if (scanner) {
-        scanner.stop().catch(() => {});
-        try {
-          scanner.clear();
-        } catch {}
-      }
-    };
-  }, []);
+  async function stopScanner() {
+    const scanner = scannerRef.current;
+    if (scanner) {
+      try {
+        await scanner.stop();
+        scanner.clear();
+      } catch {}
+      scannerRef.current = null;
+    }
+    setScannerOpen(false);
+    setScanState("idle");
+    setScanMessage("");
+  }
+
+  async function startScanner() {
+    try {
+      const scanner = new Html5Qrcode(SCANNER_ID);
+      scannerRef.current = scanner;
+      await scanner.start(
+        { facingMode: "environment" },
+        { fps: 10, qrbox: { width: 250, height: 250 } },
+        (text) => void handleScan(text),
+        () => {},
+      );
+      setScannerOpen(true);
+    } catch (err) {
+      console.error("Camera error:", err);
+      toast.error("Could not access camera");
+    }
+  }
 
   return (
     <div className="max-w-lg mx-auto space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold">Scan Attendance</h1>
-        <p className="text-sm text-muted-foreground">
-          Point your camera at the QR code to mark attendance
-        </p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold">Scan Attendance</h1>
+          <p className="text-sm text-muted-foreground">
+            Point your camera at the QR code to mark attendance
+          </p>
+        </div>
+        <Button variant="ghost" size="icon" onClick={handleLogout}>
+          <LogOut className="size-5" />
+        </Button>
       </div>
 
       <Card>
@@ -159,16 +169,17 @@ export default function StudentDashboard() {
           <div className="relative w-full overflow-hidden rounded-lg aspect-square bg-muted">
             <div id={SCANNER_ID} className="w-full h-full" />
 
-            {!cameraStarted && (
-              <div className="absolute inset-0 flex flex-col items-center justify-center gap-2">
-                <Camera className="size-10 text-muted-foreground" />
-                <p className="text-sm text-muted-foreground">
-                  Requesting camera access...
-                </p>
+            {!scannerOpen && (
+              <div className="absolute inset-0 flex flex-col items-center justify-center gap-4">
+                <QrCode className="size-16 text-muted-foreground/40" />
+                <Button onClick={startScanner} className="gap-2">
+                  <Camera className="size-4" />
+                  Open Scanner
+                </Button>
               </div>
             )}
 
-            {scanState !== "idle" && (
+            {scannerOpen && scanState !== "idle" && (
               <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-background/80 backdrop-blur-sm">
                 {scanState === "scanning" && (
                   <Clock className="size-12 animate-pulse text-primary" />
@@ -183,6 +194,18 @@ export default function StudentDashboard() {
               </div>
             )}
           </div>
+
+          {scannerOpen && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={stopScanner}
+              className="w-full mt-3 gap-2"
+            >
+              <CameraOff className="size-4" />
+              Close Scanner
+            </Button>
+          )}
         </CardContent>
       </Card>
 
